@@ -1,6 +1,6 @@
-lazy val `sbt-api-migrator` = project.in(file("."))
+lazy val `sbt-rewrites` = project.in(file("."))
 
-name := "sbt-api-migrator"
+name := "sbt-rewrites"
 
 organization := "me.vican.jorge"
 
@@ -12,7 +12,7 @@ crossScalaVersions := Seq("2.11.8", "2.12.1")
 resolvers += Resolver.bintrayRepo("jvican", "releases")
 
 libraryDependencies ++= Vector(
-  "ch.epfl.scala" %% "scalafix-cli" % "0.3.3-SNAPSHOT",
+  "ch.epfl.scala" %% "scalafix-cli" % "0.3.2",
   "org.scalatest" %% "scalatest" % "3.0.0" % "test"
 )
 

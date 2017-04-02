@@ -23,14 +23,18 @@ class SbtOneZeroMigrationSpec extends FunSuite {
     val `<++=Test`: String = loadResource("<++=.sbt")
     val `<++=Expected`: String = loadResource("<++=.sbt.expected")
 
-    val `sourceGeneratorsTest`: String = loadResource("source-generators.sbt")
-    val `sourceGeneratorsExpected`: String = loadResource(
+    val sourceGeneratorsTest: String = loadResource("source-generators.sbt")
+    val sourceGeneratorsExpected: String = loadResource(
       "source-generators.sbt.expected")
 
-    val `resourceGeneratorsTest`: String = loadResource(
+    val resourceGeneratorsTest: String = loadResource(
       "resource-generators.sbt")
-    val `resourceGeneratorsExpected`: String = loadResource(
+    val resourceGeneratorsExpected: String = loadResource(
       "resource-generators.sbt.expected")
+
+    val evaluatedTest: String = loadResource("evaluated-tasks.sbt")
+    val evaluatedExpected: String = loadResource(
+      "evaluated-tasks.sbt.expected")
 
     val officialExample: String = loadResource("example.sbt")
     val officialExampleExpected: String = loadResource("example.sbt.expected")
@@ -82,13 +86,17 @@ class SbtOneZeroMigrationSpec extends FunSuite {
   }
 
   test("fix sourceGenerators") {
-    testSbtRewrite(SbtFiles.`sourceGeneratorsTest`,
-                   SbtFiles.`sourceGeneratorsExpected`)
+    testSbtRewrite(SbtFiles.sourceGeneratorsTest,
+                   SbtFiles.sourceGeneratorsExpected)
   }
 
   test("fix resourceGenerators") {
-    testSbtRewrite(SbtFiles.`resourceGeneratorsTest`,
-                   SbtFiles.`resourceGeneratorsExpected`)
+    testSbtRewrite(SbtFiles.resourceGeneratorsTest,
+                   SbtFiles.resourceGeneratorsExpected)
+  }
+
+  test("fix input tasks that need evaluated") {
+    testSbtRewrite(SbtFiles.evaluatedTest, SbtFiles.evaluatedExpected)
   }
 
   /*  test("fix example in official docs") {

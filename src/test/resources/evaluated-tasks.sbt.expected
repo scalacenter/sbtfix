@@ -1,0 +1,71 @@
+lazy val seed = inputKey[Unit]("Seed.")
+seed := {}
+
+run := seed.evaluated
+
+run := (seed in ThisProject).evaluated
+
+run := (seed in ThisProject).evaluated
+
+run := (Def.inputTask { seed.value }).evaluated
+
+run := (Def.inputTask { (seed).value }).evaluated
+
+run := (Def.inputTask {
+  println("Executing task.")
+  seed.value
+}).evaluated
+
+lazy val seed2 = inputKey[Unit]("Seed 2.")
+seed2 := {}
+
+runMain := seed2.evaluated
+
+runMain := (seed2 in ThisProject).evaluated
+
+runMain := (seed2 in ThisProject).evaluated
+
+runMain := (Def.inputTask { seed2.value }).evaluated
+
+runMain := (Def.inputTask { (seed2).value }).evaluated
+
+runMain := (Def.inputTask {
+  println("Executing task.")
+  seed2.value
+}).evaluated
+
+lazy val seed3 = inputKey[Unit]("Seed 3.")
+seed3 := {}
+
+testOnly := seed3.evaluated
+
+testOnly := (seed3 in ThisProject).evaluated
+
+testOnly := (seed3 in ThisProject).evaluated
+
+testOnly := (Def.inputTask { seed3.value }).evaluated
+
+testOnly := (Def.inputTask { (seed3).value }).evaluated
+
+testOnly := (Def.inputTask {
+  println("Executing task.")
+  seed3.value
+}).evaluated
+
+lazy val seed4 = inputKey[Unit]("Seed 4.")
+seed4 := {}
+
+testQuick := seed4.evaluated
+
+testQuick := (seed4 in ThisProject).evaluated
+
+testQuick := (seed4 in ThisProject).evaluated
+
+testQuick := (Def.inputTask { seed4.value }).evaluated
+
+testQuick := (Def.inputTask { (seed4).value }).evaluated
+
+testQuick := (Def.inputTask {
+  println("Executing task.")
+  seed4.value
+}).evaluated

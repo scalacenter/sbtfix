@@ -1,0 +1,33 @@
+lazy val seed = taskKey[File]("Seed.")
+seed := new File(".")
+
+lazy val seeds = taskKey[Seq[File]]("Seed.")
+seeds := List(new File("."))
+
+resourceGenerators in Compile += seed.taskValue
+
+(resourceGenerators in Compile) += seed.taskValue
+
+resourceGenerators in Compile += Def.task(seed.value).taskValue
+
+(resourceGenerators in Compile) += (Def.task {
+  seed.value
+}).taskValue
+
+(resourceGenerators in Compile) += (Def.task {
+  seed.value
+}).taskValue
+
+resourceGenerators in Compile ++= seeds.taskValue
+
+(resourceGenerators in Compile) ++= seeds.taskValue
+
+resourceGenerators in Compile ++= Def.task(seeds.value).taskValue
+
+(resourceGenerators in Compile) ++= (Def.task {
+  seeds.value
+}).taskValue
+
+(resourceGenerators in Compile) ++= (Def.task {
+  seeds.value
+}).taskValue

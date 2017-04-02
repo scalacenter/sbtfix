@@ -73,7 +73,6 @@ class PluginInspector(files: Seq[File]) {
         resolution.artifacts.map(Cache.file(_).run)
       )
       .unsafePerformSync
-    println(errorsOrArtifacts)
     if (resolution.errors.nonEmpty)
       sys.error(s"Resolution errors: ${resolution.errors.mkString("\n")}")
     else errorsOrArtifacts.flatMap(_.toList)

@@ -1,8 +1,0 @@
-logLevel := Level.Warn
-credentials += Credentials("Sonatype Nexus Repository Manager",
-                           "oss.sonatype.org",
-                           "caca",
-                           "caca")
-addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
-addSbtPlugin("me.lessis" % "bintray-sbt" % "0.3.0")
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")

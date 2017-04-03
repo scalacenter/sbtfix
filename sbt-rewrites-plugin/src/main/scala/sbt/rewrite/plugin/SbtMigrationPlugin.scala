@@ -17,8 +17,9 @@ trait SbtMigrationKeys {
 
 object SbtMigrationPlugin
     extends AutoPlugin
+    with PluginProcessor
     with SbtMigrationKeys
-    with SbtUtils
+    with SbtBootstrapUtil
     with ReflectionUtils {
 
   object autoImport extends SbtMigrationKeys
@@ -61,17 +62,29 @@ object SbtMigrationPlugin
           cachedInstance = clazz.newInstance()
           cachedEntrypoint = getProxyMethod(clazz)
         }
-        /*
-        val extracted = Project.extract(state.value)
-        val autoPlugins = extracted.currentProject.autoPlugins
-        println("LJKSADLSKJADJ")
-        println(autoPlugins.map(plugin => plugin.projectSettings.map(_.key.key.manifest)))
+        val settingInfos = allSettingInfos(state.value)
         val sbtDir: File = (baseDirectory in ThisBuild).value
-        val keysOfTasks: Array[String] = ???
-        val inputKeys: Array[String] = ???
-        cachedEntrypoint.invoke(cachedInstance, sbtDir, keysOfTasks, inputKeys)*/
+        cachedEntrypoint.invoke(cachedInstance, sbtDir, settingInfos)
       }
     )
+  }
+}
+
+trait PluginProcessor {
+  def allSettingInfos(state: State): Array[Array[String]] = {
+    val logger = state.log
+    val extracted = Project.extract(state)
+    val autoPlugins = extracted.currentProject.autoPlugins
+    def getType(setting: Setting[_]): String =
+      setting.key.key.manifest.toString
+    val settingsWithTypes = autoPlugins.flatMap { plugin =>
+      logger.info(s"Analyzing keys of ${plugin.label}.")
+      val settings = plugin.projectSettings.++(
+        plugin.buildSettings.++(plugin.globalSettings))
+      settings.map(s => s.key.key.label -> getType(s))
+    }.distinct
+    // Converting to arrays to pass them as arguments via reflection
+    settingsWithTypes.map(t => Array(t._1, t._2)).toArray
   }
 }
 
@@ -83,18 +96,17 @@ trait ReflectionUtils {
     clazz.getDeclaredMethod(
       RunMethod,
       classOf[File],
-      classOf[Array[String]],
-      classOf[Array[String]]
+      classOf[Array[Array[String]]]
     )
   }
 }
 
 /** Define sbt utils for the plugin. */
-trait SbtUtils { self: SbtMigrationKeys =>
+trait SbtBootstrapUtil { self: SbtMigrationKeys =>
   protected val Version: Regex = "2\\.(\\d\\d)\\..*".r
   protected val SbtMigrationName = "sbt-rewrites"
   protected val SbtMigrationGroupId = "ch.epfl.scala"
-  protected val SbtMigrationVersion = "0.1.0"
+  protected val SbtMigrationVersion = "0.1.0-SNAPSHOT"
 
   private def failedResolution(report: UpdateReport) =
     s"Unable to resolve the Zinc proxy: $report"
@@ -119,7 +131,8 @@ trait SbtUtils { self: SbtMigrationKeys =>
         libraryDependencies := Nil,
         libraryDependencies +=
           (SbtMigrationGroupId %% SbtMigrationName % migratorVersion),
-        resolvers += Resolver.bintrayRepo("scalacenter", "releases")
+        resolvers += Resolver.bintrayRepo("scalacenter", "releases"),
+        resolvers += Resolver.bintrayIvyRepo("scalameta", "maven")
       )
   }
 
@@ -137,7 +150,7 @@ trait SbtUtils { self: SbtMigrationKeys =>
             logger.info(s"Got $v. Only Scala 2.11 or 2.12 are supported.")
             val extracted = Project.extract(st)
             val nextVersion = "2.11.8"
-            logger.info(s"Changing to $nextVersion.")
+            logger.info(s"Changing to $nextVersion to resolve sbt rewrites.")
             val newScalaVersion = scalaVersion := nextVersion
             extracted.append(List(newScalaVersion), st)
             Keys.update in stubFor211

@@ -31,7 +31,7 @@ lazy val noPublish = Seq(
 lazy val buildSettings: Seq[Setting[_]] = Seq(
   organization := "ch.epfl.scala",
   resolvers += Resolver.jcenterRepo,
-  resolvers += Resolver.bintrayIvyRepo("scalacenter", "sbt-releases"),
+  resolvers += Resolver.bintrayIvyRepo("scalameta", "maven"),
   updateOptions := updateOptions.value.withCachedResolution(true)
 )
 
@@ -63,6 +63,7 @@ lazy val `sbt-migration-tool` = project
   .in(file("."))
   .settings(commonSettings, buildSettings, noPublish)
   .aggregate(`sbt-rewrites`)
+  .settings(watchSources += (baseDirectory in `sbt-rewrites-plugin`).value)
 
 lazy val `sbt-rewrites` = project
   .settings(publishSettings, buildSettings, commonSettings)
@@ -73,9 +74,9 @@ lazy val `sbt-rewrites` = project
     scalaVersion := crossScalaVersions.value.head,
     libraryDependencies ++= Vector(
       "com.github.pathikrit" %% "better-files" % "2.17.1",
-      "io.get-coursier" %% "coursier" % "1.0.0-M15",
-      "io.get-coursier" %% "coursier-cache" % "1.0.0-M15",
-      "ch.epfl.scala" %% "scalafix-cli" % "0.3.2",
+      "io.get-coursier" %% "coursier" % "1.0.0-M15-5",
+      "io.get-coursier" %% "coursier-cache" % "1.0.0-M15-5",
+      "ch.epfl.scala" % "scalafix-cli" % "0.3.3" cross CrossVersion.full,
       "org.scalatest" %% "scalatest" % "3.0.0" % "test"
     ),
     assemblyJarName in assembly :=

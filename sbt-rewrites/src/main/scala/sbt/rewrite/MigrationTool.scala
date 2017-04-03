@@ -2,14 +2,14 @@ package sbt.rewrite
 
 import java.io.File
 
-import scalafix.cli.{Cli, ScalafixOptions}
+import scalafix.cli.{Cli, ExitStatus, ScalafixOptions}
 import scalafix.config.ScalafixConfig
 
 final class MigrationTool {
-  private def migrateBuild(rootFolder: File, sbtContext: SbtContext): Int = {
+  private def migrateBuild(rootFolder: File,
+                           sbtContext: SbtContext): ExitStatus = {
     val sbtRewrite = SbtOneZeroMigration(sbtContext)
-    val config = ScalafixConfig(dialect = scala.meta.dialects.Sbt0137,
-                                rewrites = List(sbtRewrite))
+    val config = ScalafixConfig(rewrites = List(sbtRewrite))
     Cli.runOn(
       ScalafixOptions(files = List(rootFolder.getAbsolutePath),
                       inPlace = true,
@@ -18,9 +18,10 @@ final class MigrationTool {
   }
 
   def migrateBuildFromSbt(rootFolder: File,
-                          keyOfTasks: Array[String],
-                          inputKeys: Array[String]): Int = {
-    val sbtContext = SbtContext(keyOfTasks, inputKeys)
-    migrateBuild(rootFolder, sbtContext)
+                          runtimeSbtInfo: Array[Array[String]]): Int = {
+    val settingInfos = runtimeSbtInfo.map(SettingInfo.apply)
+    val sbtContext = SbtContext(settingInfos)
+    println(sbtContext.interpretContext)
+    migrateBuild(rootFolder, sbtContext).code
   }
 }

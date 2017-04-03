@@ -4,7 +4,7 @@ import java.io.File
 
 import org.scalatest.FunSuite
 
-import scalafix.cli.{Cli, ScalafixOptions}
+import scalafix.cli.{Cli, ExitStatus, ScalafixOptions}
 import scalafix.config.ScalafixConfig
 import scalafix.util.FileOps
 
@@ -55,8 +55,8 @@ class SbtOneZeroMigrationSpec extends FunSuite {
     file
   }
 
-  private def fixSbtFile(sbtFile: File): Int = {
-    val ctx = SbtContext(Array(), Array())
+  private def fixSbtFile(sbtFile: File): ExitStatus = {
+    val ctx = SbtContext(Array())
     val config = ScalafixConfig(dialect = scala.meta.dialects.Sbt0137,
                                 rewrites = List(SbtOneZeroMigration(ctx)))
     Cli.runOn(
@@ -70,7 +70,7 @@ class SbtOneZeroMigrationSpec extends FunSuite {
     val dir = createTempDir
     val sbtFile = createFile(original, dir)
     assert(original != expected, "Original and expected are the same.")
-    assert(fixSbtFile(sbtFile) === 0)
+    assert(fixSbtFile(sbtFile) === ExitStatus.Ok)
     assertResult(expected.trim)(FileOps.readFile(sbtFile).trim)
   }
 

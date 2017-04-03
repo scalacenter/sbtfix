@@ -34,8 +34,9 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
     object SpecialCases {
       val defaultKeyOfTasks = List("sourceGenerators", "resourceGenerators")
       val defaultInputKeys = List("run", "runMain", "testOnly", "testQuick")
-      val keyOfTasks = (defaultKeyOfTasks ++ sbtContext.keysOfTasks).toSet
-      val inputKeys = (defaultInputKeys ++ sbtContext.inputKeys).toSet
+      val ctx = sbtContext.interpretContext
+      val keyOfTasks = (defaultKeyOfTasks ++ ctx.keyOfTasks).toSet
+      val inputKeys = (defaultInputKeys ++ ctx.inputKeys).toSet
     }
 
     def unapply(tree: Term): Option[(Term, Token, Term.Arg)] = tree match {

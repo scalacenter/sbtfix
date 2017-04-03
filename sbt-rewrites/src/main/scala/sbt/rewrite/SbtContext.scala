@@ -19,6 +19,19 @@ case class Interpreted(inputKeys: List[String],
 
   def addFailedSignature(failed: String): Interpreted =
     this.copy(failedSignatures = failed :: failedSignatures)
+
+  def isEmpty: Boolean =
+    inputKeys.isEmpty && keyOfTasks.isEmpty && failedSignatures.isEmpty
+
+  def reportToUser(): Unit = {
+    if (isEmpty) println("Sbt runtime analysis produced no results.")
+    else {
+      println("Sbt runtime analysis reports:")
+      println(s"\tInput keys: ${inputKeys.mkString(", ")}.")
+      println(s"\tKeys that required evaluated: ${inputKeys.mkString(", ")}.")
+      println(s"\tErrors parsing ${failedSignatures.mkString(", ")}.")
+    }
+  }
 }
 
 object Interpreted {

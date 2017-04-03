@@ -32,8 +32,10 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
     }
 
     object SpecialCases {
-      val keyOfTasks = List("sourceGenerators", "resourceGenerators")
-      val inputKeys = List("run", "runMain", "testOnly", "testQuick")
+      val defaultKeyOfTasks = List("sourceGenerators", "resourceGenerators")
+      val defaultInputKeys = List("run", "runMain", "testOnly", "testQuick")
+      val keyOfTasks = (defaultKeyOfTasks ++ sbtContext.keysOfTasks).toSet
+      val inputKeys = (defaultInputKeys ++ sbtContext.inputKeys).toSet
     }
 
     def unapply(tree: Term): Option[(Term, Token, Term.Arg)] = tree match {
@@ -55,7 +57,7 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
       tokens.last.isInstanceOf[RightParen]
     }
 
-    private def existKeys(lhs: Term, keyNames: Seq[String]): Boolean = {
+    private def existKeys(lhs: Term, keyNames: Set[String]): Boolean = {
       val singleNames = lhs match {
         case tname @ Term.Name(name) if keyNames.contains(name) => tname :: Nil
         case _ => Nil

@@ -9,10 +9,17 @@ import scalafix.util._
 /**
   * Migrates code from sbt 0.13.x to sbt 1.0.x.
   *
-  * These rewrites are only syntactic. Semantic rewrites are not possible
-  * because Scala Meta does not cross-compile to Scala 2.10. Therefore, some
-  * of the rewrites here provided are speculative and not work in 100% of all
-  * the cases.
+  * These rewrites are only syntactic, but they can use semantic runtime
+  * information captured from sbt via the sbt plugin. Fully semantic rewrites
+  * are not possible because Scala Meta does not cross-compile to Scala 2.10.
+  *
+  * Some of the rewrites here provided are speculative and don't work in 100%
+  * of all the cases. These rewrites currently assume:
+  *
+  * - Sbt DSL operators are not defined by a third party.
+  * - If they are defined, they are not binary operators.
+  *
+  * If those conditions are not met, the sbt rewriter will not work correctly.
   *
   * For instance, sbt settings or tasks that store themselves tasks or settings
   * are not rewritten correctly because they need `.taskValue` instead of the
@@ -32,6 +39,7 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
     }
 
     object SpecialCases {
+      // Default keys have to stay for `SbtOneZeroMigrationSpec` to work for now
       val defaultKeyOfTasks = List("sourceGenerators", "resourceGenerators")
       val defaultInputKeys = List("run", "runMain", "testOnly", "testQuick")
       val ctx = sbtContext.interpretContext
@@ -40,8 +48,14 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
     }
 
     def unapply(tree: Term): Option[(Term, Token, Term.Arg)] = tree match {
-      case Term.ApplyInfix(lhs, op @ Term.Name(`operator`), _, Seq(rhs)) =>
-        Some((lhs, op.tokens.head, rhs))
+      case Term.ApplyInfix(lhs, o @ Term.Name(`operator`), _, Seq(rhs)) =>
+        Some((lhs, o.tokens.head, rhs))
+      case Term.Apply(Term.Select(lhs, o @ Term.Name(`operator`)), Seq(rhs)) =>
+        Some((lhs, o.tokens.head, rhs))
+      case Term.Apply(
+          Term.ApplyType(Term.Select(lhs, o @ Term.Name(`operator`)), _),
+          Seq(rhs)) =>
+        Some((lhs, o.tokens.head, rhs))
       case _ =>
         None
     }

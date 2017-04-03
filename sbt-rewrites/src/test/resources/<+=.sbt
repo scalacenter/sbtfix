@@ -10,6 +10,8 @@ target <+= (seed in ThisBuild)
 
 target <+= Def.task(seed.value)
 
+target.<+=[File](Def.task(seed.value))
+
 target <+= Def.task {
   println("Executing task.")
   (seed).value

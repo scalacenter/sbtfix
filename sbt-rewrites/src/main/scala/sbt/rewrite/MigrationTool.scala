@@ -21,7 +21,6 @@ final class MigrationTool {
                           runtimeSbtInfo: Array[Array[String]]): Int = {
     val settingInfos = runtimeSbtInfo.map(SettingInfo.apply)
     val sbtContext = SbtContext(settingInfos)
-    println(sbtContext.interpretContext)
     migrateBuild(rootFolder, sbtContext).code
   }
 }

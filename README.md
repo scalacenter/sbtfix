@@ -35,8 +35,7 @@ Two examples:
 
 ### How do they work?
 
-Sbt rewrites cannot be semantic because [Scala Meta cannot compile sbt 0.13.x
-projects because they depend on Scala 2.10.x series](https://github.com/scalameta/scalameta/issues/295).
+Sbt rewrites cannot be semantic because [Scala Meta is not cross-compiled to Scala 2.10.x series](https://github.com/scalameta/scalameta/issues/295).
 
 To fill in the gap, sbt rewrites make a best-effort to get this semantic
 information from sbt at runtime via the Scala reflection API. This type information

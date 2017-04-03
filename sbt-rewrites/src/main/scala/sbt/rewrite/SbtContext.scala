@@ -23,14 +23,15 @@ case class Interpreted(inputKeys: List[String],
   def isEmpty: Boolean =
     inputKeys.isEmpty && keyOfTasks.isEmpty && failedSignatures.isEmpty
 
+  private final val t = s"\t${Console.GREEN}=>${Console.RESET} "
   def reportToUser(): Unit = {
     if (isEmpty) println("Sbt runtime analysis produced no results.")
     else {
       val quotedSigs = failedSignatures.map(sig => s"`$sig`")
-      println("Sbt runtime analysis reports:")
-      println(s"\tInput keys: ${inputKeys.mkString(", ")}.")
-      println(s"\tKeys that required evaluated: ${inputKeys.mkString(", ")}.")
-      println(s"\tErrors parsing ${quotedSigs.mkString(", ")}.")
+      println("Sbt runtime analysis found:")
+      println(s"${t}Input keys: ${inputKeys.mkString(", ")}.")
+      println(s"${t}Keys to be `evaluated`: ${inputKeys.mkString(", ")}.")
+      println(s"${t}Errors parsing ${quotedSigs.mkString(", ")}.")
     }
   }
 }

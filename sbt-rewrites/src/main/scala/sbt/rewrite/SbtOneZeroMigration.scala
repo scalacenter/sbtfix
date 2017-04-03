@@ -21,11 +21,23 @@ import scalafix.util._
   *
   * If those conditions are not met, the sbt rewriter will not work correctly.
   *
-  * For instance, sbt settings or tasks that store themselves tasks or settings
-  * are not rewritten correctly because they need `.taskValue` instead of the
-  * regular `.value`. `sourceGenerators` and `resourceGenerator` are such a
-  * case, but the migration tool special cases them to make sure they are
-  * correctly handled.
+  * Note that some rewrites here present may need semantic information to
+  * disambiguate which sbt macro should be executed. For instance, input keys
+  * need `.taskValue` instead of `.value`. Keys that store tasks or settings
+  * need `.evaluated` instead of `.value`.
+  *
+  * The sbt runtime interpreter allows the rewrite to get access to all the
+  * present sbt keys and analyze their type, however this information is not
+  * reliable enough to be called "semantic". The reasons are the following:
+  *
+  * - Manifest pretty printer will produce inaccurate type representations.
+  *   For instance, type projections and type closures don't follow Scala syntax.
+  * - Manifest prints fully qualified names for all names not present in
+  *   Scala jars, but there is no way to check this contract is not broken.
+  *
+  * Therefore, with all the previous explanation, these rewrites do a
+  * best-effort to migrate sbt code from 0.13.x to 1.0.x. They will work in most
+  * of the cases. In the rest, your builds may need some manual intervention.
   */
 case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
   sealed abstract class SbtOperator {
@@ -39,13 +51,10 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
     }
 
     object SpecialCases {
-      // Default keys have to stay for `SbtOneZeroMigrationSpec` to work for now
-      val defaultKeyOfTasks = List("sourceGenerators", "resourceGenerators")
-      val defaultInputKeys = List("run", "runMain", "testOnly", "testQuick")
       val ctx: Interpreted = sbtContext.interpretContext
+      val keyOfTasks: Set[String] = ctx.keyOfTasks.toSet
+      val inputKeys: Set[String] = ctx.inputKeys.toSet
       ctx.reportToUser()
-      val keyOfTasks: Set[String] = (defaultKeyOfTasks ++ ctx.keyOfTasks).toSet
-      val inputKeys: Set[String] = (defaultInputKeys ++ ctx.inputKeys).toSet
     }
 
     def unapply(tree: Term): Option[(Term, Token, Term.Arg)] = tree match {

@@ -55,22 +55,43 @@ class SbtOneZeroMigrationSpec extends FunSuite {
     file
   }
 
-  private def fixSbtFile(sbtFile: File): ExitStatus = {
-    val ctx = SbtContext(Array())
+  object DefaultSbtKeys {
+    val sourceGen =
+      Array("sourceGenerators", "sbt.Task[Seq[sbt.Task[Seq[File]]]]")
+    val resourceGen =
+      Array("resourceGenerators", "sbt.Task[Seq[sbt.Task[Seq[File]]]]")
+    val run = Array("run", "sbt.InputTask[Unit]")
+    val runMain = Array("runMain", "sbt.InputTask[Unit]")
+    val testOnly = Array("testOnly", "sbt.InputTask[Unit]")
+    val testQuick = Array("testQuick", "sbt.InputTask[Unit]")
+    val all = Array(run, runMain, testOnly, testQuick, sourceGen, resourceGen)
+  }
+
+  private def fixSbtFile(sbtFile: File): (Interpreted, ExitStatus) = {
+    // Default keys have to stay for `SbtOneZeroMigrationSpec` to work for now
+    val settingInfos = DefaultSbtKeys.all.map(SettingInfo.apply)
+    val ctx = SbtContext(settingInfos)
     val config = ScalafixConfig(dialect = scala.meta.dialects.Sbt0137,
                                 rewrites = List(SbtOneZeroMigration(ctx)))
-    Cli.runOn(
+    ctx.interpretContext -> Cli.runOn(
       ScalafixOptions(files = List(sbtFile.getAbsolutePath),
                       inPlace = true,
                       config = Some(config))
     )
   }
 
+  final val defaultKeyOfTasks = List("sourceGenerators", "resourceGenerators")
+  final val defaultInputKeys = List("run", "runMain", "testOnly", "testQuick")
+
   def testSbtRewrite(original: String, expected: String): Unit = {
     val dir = createTempDir
     val sbtFile = createFile(original, dir)
     assert(original != expected, "Original and expected are the same.")
-    assert(fixSbtFile(sbtFile) === ExitStatus.Ok)
+    val (sbtRuntime, exitStatus) = fixSbtFile(sbtFile)
+    assert(exitStatus === ExitStatus.Ok)
+    assert(sbtRuntime.keyOfTasks.sorted === defaultKeyOfTasks.sorted)
+    assert(sbtRuntime.inputKeys.sorted === defaultInputKeys.sorted)
+    assert(sbtRuntime.failedSignatures.isEmpty)
     assertResult(expected.trim)(FileOps.readFile(sbtFile).trim)
   }
 

@@ -54,7 +54,7 @@ present sbt keys and analyze their type, however this information is not
 reliable enough to be called "semantic". The reasons are the following:
   
 * Manifest pretty printer will produce inaccurate type representations.
-  For instance, type projections and type closures don't follow Scala syntax.
+  For instance, stringified type projections and type closures don't follow Scala syntax.
 * Manifest prints fully qualified names for all names not present in
   Scala jars, but there is no way to check this contract is not broken.
 * A key scoped in a project with name `X` and of type `T` may conflict with

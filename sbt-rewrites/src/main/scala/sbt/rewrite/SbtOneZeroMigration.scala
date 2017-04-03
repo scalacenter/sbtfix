@@ -20,7 +20,7 @@ import scalafix.util._
   * case, but the migration tool special cases them to make sure they are
   * correctly handled.
   */
-case object SbtOneZeroMigration extends Rewrite[Any] {
+case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
   sealed abstract class SbtOperator {
     val operator: String
     val newOperator: String

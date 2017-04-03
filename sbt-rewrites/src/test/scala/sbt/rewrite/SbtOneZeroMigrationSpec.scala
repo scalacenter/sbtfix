@@ -56,8 +56,9 @@ class SbtOneZeroMigrationSpec extends FunSuite {
   }
 
   private def fixSbtFile(sbtFile: File): Int = {
+    val ctx = SbtContext(Array(), Array())
     val config = ScalafixConfig(dialect = scala.meta.dialects.Sbt0137,
-                                rewrites = List(SbtOneZeroMigration))
+                                rewrites = List(SbtOneZeroMigration(ctx)))
     Cli.runOn(
       ScalafixOptions(files = List(sbtFile.getAbsolutePath),
                       inPlace = true,

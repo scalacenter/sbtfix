@@ -60,6 +60,7 @@ lazy val commonSettings: Seq[Setting[_]] = Seq(
 
 // Don't aggregate the plugin here
 lazy val `sbt-migration-tool` = project
+  .in(file("."))
   .settings(commonSettings, buildSettings, noPublish)
   .aggregate(`sbt-rewrites`)
 
@@ -76,14 +77,38 @@ lazy val `sbt-rewrites` = project
       "io.get-coursier" %% "coursier-cache" % "1.0.0-M15",
       "ch.epfl.scala" %% "scalafix-cli" % "0.3.2",
       "org.scalatest" %% "scalatest" % "3.0.0" % "test"
-    )
+    ),
+    assemblyJarName in assembly :=
+      name.value + "_" + scalaVersion.value + "-" + version.value + "-assembly.jar",
+    test in assembly := {},
+    packagedArtifact in Compile in packageBin := {
+      val temp = (packagedArtifact in Compile in packageBin).value
+      val (art, slimJar) = temp
+      val fatJar =
+        new File(crossTarget.value + "/" + (assemblyJarName in assembly).value)
+      val _ = assembly.value
+      IO.copy(List(fatJar -> slimJar), overwrite = true)
+      (art, slimJar)
+    },
+    publishArtifact in Compile := true,
+    Keys.`package` in Compile := {
+      val slimJar = (Keys.`package` in Compile).value
+      val fatJar =
+        new File(crossTarget.value + "/" + (assemblyJarName in assembly).value)
+      val _ = assembly.value
+      IO.copy(List(fatJar -> slimJar), overwrite = true)
+      slimJar
+    }
   )
 
 lazy val `sbt-rewrites-plugin` = project
   .settings(publishSettings, buildSettings, commonSettings)
+  .settings(ScriptedPlugin.scriptedSettings: Seq[Setting[_]])
   .settings(
+    name := "sbt-migrator",
     sbtPlugin := true,
-    bintrayRepository := "releases",
+    scalaVersion := "2.10.6",
+    bintrayRepository := "sbt-releases",
     publishMavenStyle := false,
     publishLocal := {
       publishLocal

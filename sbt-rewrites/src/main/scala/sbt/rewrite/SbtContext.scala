@@ -26,10 +26,11 @@ case class Interpreted(inputKeys: List[String],
   def reportToUser(): Unit = {
     if (isEmpty) println("Sbt runtime analysis produced no results.")
     else {
+      val quotedSigs = failedSignatures.map(sig => s"`$sig`")
       println("Sbt runtime analysis reports:")
       println(s"\tInput keys: ${inputKeys.mkString(", ")}.")
       println(s"\tKeys that required evaluated: ${inputKeys.mkString(", ")}.")
-      println(s"\tErrors parsing ${failedSignatures.mkString(", ")}.")
+      println(s"\tErrors parsing ${quotedSigs.mkString(", ")}.")
     }
   }
 }

@@ -25,7 +25,7 @@ class PluginInspector(files: Seq[File]) {
   type InputKeys = Seq[String]
   type KeyOfTasks = Seq[String]
 
-  val sbtRepositories: Seq[coursier.Repository] = {
+  final val sbtRepositories: Seq[coursier.Repository] = {
     import coursier.{Cache, MavenRepository}
     import coursier.ivy.IvyRepository
 
@@ -60,30 +60,21 @@ class PluginInspector(files: Seq[File]) {
   }
 
   lazy val pluginLocations: Seq[File] = {
-    import coursier._
+    import scalaz.concurrent.Task
+    import coursier.{Dependency, Module, Cache, Resolution, Fetch}
     val attributes = Map("sbtVersion" -> "0.13", "scalaVersion" -> "2.10")
     def toDep(plugin: SbtPlugin): Dependency =
       Dependency(Module(plugin.org, plugin.name, attributes), plugin.version)
     val dependencies = discoveredPlugins.map(toDep).toSet
     val start = Resolution(dependencies)
     val fetch = Fetch.from(sbtRepositories, Cache.fetch())
-    val resolution = start.process.run(fetch).run
-    val errorsOrArtifacts = scalaz.concurrent.Task
-      .gatherUnordered(
-        resolution.artifacts.map(Cache.file(_).run)
-      )
+    val resolution = start.process.run(fetch).unsafePerformSync
+    val errorsOrArtifacts = Task
+      .gatherUnordered(resolution.artifacts.map(Cache.file(_).run))
       .unsafePerformSync
     if (resolution.errors.nonEmpty)
       sys.error(s"Resolution errors: ${resolution.errors.mkString("\n")}")
     else errorsOrArtifacts.flatMap(_.toList)
-  }
-
-  def extractInputKeys: InputKeys = {
-    ???
-  }
-
-  def extractKeyOfTasks: InputKeys = {
-    ???
   }
 }
 

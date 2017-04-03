@@ -56,9 +56,19 @@ case object SbtOneZeroMigration extends Rewrite[Any] {
     }
 
     private def existKeys(lhs: Term, keyNames: Seq[String]): Boolean = {
-      lhs.collect {
-        case tname @ Term.Name(name) if keyNames.contains(name) => tname
-      }.nonEmpty
+      val singleNames = lhs match {
+        case tname @ Term.Name(name) if keyNames.contains(name) => tname :: Nil
+        case _ => Nil
+      }
+      val scopedNames = lhs.collect {
+        case Term.Select(Term.Name(name), Term.Name("in"))
+            if keyNames.contains(name) =>
+          name
+        case Term.ApplyInfix(Term.Name(name), Term.Name("in"), _, _)
+            if keyNames.contains(name) =>
+          name
+      }
+      (singleNames ++ scopedNames).nonEmpty
     }
 
     def rewriteDslOperator(lhs: Term,

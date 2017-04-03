@@ -4,11 +4,12 @@
 Scalafix rewrites to migrate builds from sbt 0.13.x to 1.0.x.
 
 These rewrites are mainly syntactic and use information available at runtime
-to fill the need for semantic transformations. Instead of doing the full job
-for the users, `sbt-migration` aims at helping them in the majority of the cases.
+to fill the gap for missing semantic rewrites. `sbt-migration` aims at helping
+sbt users port their 0.13.x sbt code to 1.0.x, but it does not promise to do
+the full job for them.
 
-The lack of fully semantic rewrites prevent it from doing 100% secure
-transformations, so manual intervention may be required. 
+The lack of fully semantic rewrites prevent it from doing 100% safe
+transformations, so manual intervention may be required in corner cases. 
 
 ## Use
 
@@ -18,8 +19,9 @@ Coming soon.
 
 The migration tool rewrites the following sbt operators: `<<=`, `<+=`, `<++=`.
 
-It does not provide rewrites for tuple enrichments on purpose because their
-`.value` version changes semantics.
+Tuple enrichments migration are not supported on purpose.
+The proposed official rewrite changes semantics and is unclear until which extent
+tuple enrichments should be gone in sbt 1.0.
 
 ### Can these rewrites be only syntactic?
 
@@ -62,7 +64,7 @@ reliable enough to be called "semantic". The reasons are the following:
   
 ### Feedback
 
-The sbt analyzer will report you all the collect information at runtime.
+The sbt analyzer will report you all the collected information at runtime.
 
 It looks like:
 

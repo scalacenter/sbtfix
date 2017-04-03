@@ -19,12 +19,12 @@ import scalafix.util._
   * - Sbt DSL operators are not defined by a third party.
   * - If they are defined, they are not binary operators.
   *
-  * If those conditions are not met, the sbt rewriter will not work correctly.
+  * If those conditions are not met, the sbt rewriter will work correctly.
   *
   * Note that some rewrites here present may need semantic information to
   * disambiguate which sbt macro should be executed. For instance, input keys
-  * need `.taskValue` instead of `.value`. Keys that store tasks or settings
-  * need `.evaluated` instead of `.value`.
+  * need `.evaluated` instead of `.value`. Keys that store tasks or settings
+  * need `.taskValue` instead of `.value`.
   *
   * The sbt runtime interpreter allows the rewrite to get access to all the
   * present sbt keys and analyze their type, however this information is not

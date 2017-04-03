@@ -30,7 +30,7 @@ case class Interpreted(inputKeys: List[String],
       val quotedSigs = failedSignatures.map(sig => s"`$sig`")
       println("Sbt runtime analysis found:")
       println(s"${t}Input keys: ${inputKeys.mkString(", ")}.")
-      println(s"${t}Keys to be `evaluated`: ${inputKeys.mkString(", ")}.")
+      println(s"${t}Keys to be `evaluated`: ${keyOfTasks.mkString(", ")}.")
       println(s"${t}Errors parsing ${quotedSigs.mkString(", ")}.")
     }
   }

@@ -1,5 +1,5 @@
 # Migrate to sbt 1.0
-[![Build Status](https://platform-ci.scala-lang.org/api/badges/jvican/sbt-migration-rewrites/status.svg)](https://platform-ci.scala-lang.org/jvican/sbt-migration-rewrites)
+[![Build Status](https://platform-ci.scala-lang.org/api/badges/scalacenter/sbt-migration-rewrites/status.svg)](https://platform-ci.scala-lang.org/scalacenter/sbt-migration-rewrites)
 
 *This rewrite library is under heavy development.*
 

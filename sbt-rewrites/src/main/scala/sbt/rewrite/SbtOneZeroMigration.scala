@@ -19,7 +19,7 @@ import scalafix.util._
   * - Sbt DSL operators are not defined by a third party.
   * - If they are defined, they are not binary operators.
   *
-  * If those conditions are not met, the sbt rewriter will work correctly.
+  * If those conditions are not met, the sbt rewriter will not work correctly.
   *
   * Note that some rewrites here present may need semantic information to
   * disambiguate which sbt macro should be executed. For instance, input keys

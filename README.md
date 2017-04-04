@@ -93,7 +93,7 @@ Running scalafix...
 Sbt runtime analysis found:
  	=> Input keys: testQuick, testOnly, runMain, run.
  	=> Keys to be `evaluated`: sourceGenerators, resourceGenerators.
- 	=> Errors parsing `sbt.Task[sbt.IvySbt#sbt.IvySbt$Module]`.
+ 	=> Errors parsing ∅.
 ```
 
 We can see:

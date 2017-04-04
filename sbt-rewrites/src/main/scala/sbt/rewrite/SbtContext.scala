@@ -31,7 +31,8 @@ case class Interpreted(inputKeys: List[String],
       println("Sbt runtime analysis found:")
       println(s"${t}Input keys: ${inputKeys.mkString(", ")}.")
       println(s"${t}Keys to be `evaluated`: ${keyOfTasks.mkString(", ")}.")
-      println(s"${t}Errors parsing ${quotedSigs.mkString(", ")}.")
+      val errors = if (quotedSigs.isEmpty) "∅" else quotedSigs.mkString(", ")
+      println(s"${t}Errors parsing: $errors.")
     }
   }
 }

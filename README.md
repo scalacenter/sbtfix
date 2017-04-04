@@ -74,18 +74,25 @@ It looks like:
 
 ```
 Migrating your sbt 0.13 build file to 1.0...
-Analyzing keys of sbt.plugins.CorePlugin.
-Analyzing keys of sbt.plugins.Giter8TemplatePlugin.
-Analyzing keys of sbt.plugins.IvyPlugin.
-Analyzing keys of sbt.plugins.JvmPlugin.
-Analyzing keys of sbt.rewrite.plugin.SbtMigrationPlugin.
-Analyzing keys of sbt.plugins.JUnitXmlReportPlugin.
+Analyzing keys of project root.
+    => Analyzed keys of sbt.plugins.CorePlugin.
+	=> Analyzed keys of sbt.plugins.Giter8TemplatePlugin.
+ 	=> Analyzed keys of sbt.plugins.IvyPlugin.
+ 	=> Analyzed keys of sbt.plugins.JvmPlugin.
+ 	=> Analyzed keys of sbt.rewrite.plugin.SbtMigrationPlugin.
+ 	=> Analyzed keys of sbt.plugins.JUnitXmlReportPlugin.
+Analyzing keys of project p1.
+ 	=> Analyzed keys of sbt.plugins.CorePlugin.
+ 	=> Analyzed keys of sbt.plugins.Giter8TemplatePlugin.
+ 	=> Analyzed keys of sbt.plugins.IvyPlugin.
+ 	=> Analyzed keys of sbt.plugins.JvmPlugin.
+ 	=> Analyzed keys of sbt.rewrite.plugin.SbtMigrationPlugin.
+ 	=> Analyzed keys of sbt.plugins.JUnitXmlReportPlugin.
 Running scalafix...
 Sbt runtime analysis found:
-	=> Input keys: testQuick, testOnly, runMain, run.
-	=> Keys to be `evaluated`: resourceGenerators, sourceGenerators.
-	=> Errors parsing .
-Running scalafix... (100.00 %, 2 / 2)
+ 	=> Input keys: testQuick, testOnly, runMain, run.
+ 	=> Keys to be `evaluated`: sourceGenerators, resourceGenerators.
+ 	=> Errors parsing `sbt.Task[sbt.IvySbt#sbt.IvySbt$Module]`.
 ```
 
 We can see:

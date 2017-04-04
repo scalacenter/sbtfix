@@ -71,20 +71,43 @@ object SbtMigrationPlugin
 }
 
 trait PluginProcessor {
+
+  import scala.Console
+  private final val t = s"\t${Console.GREEN}=>${Console.RESET} "
+
+  /**
+    * Process all the settings from projects and autoplugins.
+    *
+    * This method does repetitive computations just for the sake of
+    * correctness -- to make sure no setting is missed. This can be
+    * further optimized down the line.
+    *
+    * @param state The sbt state.
+    * @return Array of tuples (represented with arrays) of setting name and type.
+    */
   def allSettingInfos(state: State): Array[Array[String]] = {
-    val logger = state.log
-    val extracted = Project.extract(state)
-    val autoPlugins = extracted.currentProject.autoPlugins
     def getType(setting: Setting[_]): String =
       setting.key.key.manifest.toString
-    val settingsWithTypes = autoPlugins.flatMap { plugin =>
-      logger.info(s"Analyzing keys of ${plugin.label}.")
-      val settings = plugin.projectSettings.++(
-        plugin.buildSettings.++(plugin.globalSettings))
-      settings.map(s => s.key.key.label -> getType(s))
-    }.distinct
+
+    val logger = state.log
+    val extracted = Project.extract(state)
+    val allProjects = extracted.structure.allProjects
+    val userProjects = allProjects.filterNot(_.id.contains("sbt-migrator-1"))
+    val settingsWithTypes = userProjects.toSet.flatMap {
+      (project: ResolvedProject) =>
+        logger.info(s"Analyzing keys of project ${project.id}.")
+        val projectSettings =
+          project.settings.map(s => s.key.key.label -> getType(s))
+        val pluginSettings = project.autoPlugins.flatMap { plugin =>
+          logger.info(s"${t}Analyzed keys of ${plugin.label}.")
+          val pluginSettings0 = plugin.buildSettings.++(plugin.globalSettings)
+          pluginSettings0.map(s => s.key.key.label -> getType(s))
+        }
+        projectSettings.toSet ++ pluginSettings.toSet
+    }
+
     // Converting to arrays to pass them as arguments via reflection
-    settingsWithTypes.map(t => Array(t._1, t._2)).toArray
+    settingsWithTypes.toList.sorted.map(t => Array(t._1, t._2)).toArray
   }
 }
 

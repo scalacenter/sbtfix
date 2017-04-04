@@ -8,6 +8,7 @@ import sbt.{Def, _}
 import sbt.Keys._
 import sbt.plugins.JvmPlugin
 
+import scala.reflect.ClassTag
 import scala.util.matching.Regex
 
 trait SbtMigrationKeys {
@@ -76,6 +77,51 @@ trait PluginProcessor {
   private final val t = s"\t${Console.GREEN}=>${Console.RESET} "
 
   /**
+    * Defines utilities to work around deficiencies in the Manifest pretty
+    * printer that makes manifest to produce incorrect stringified Scala types.
+    *
+    * Note that it trades semantic exactitude with scala syntax correctness.
+    * Currently, it avoids invalid pretty printing of type projections, whose
+    * projected type is fully qualified. For Scala Meta to parse it, we need to
+    * truncate the FQN by a simple type name that is context-dependent.
+    */
+  object ManifestPrinter {
+    def hasPrefix(manifest: Manifest[_]): Boolean = {
+      import scala.util.control.Exception.catching
+      val clazz = manifest.getClass
+      catching(classOf[NoSuchFieldException])
+        .opt {
+          val prefixField = clazz.getDeclaredField("prefix")
+          prefixField.setAccessible(true)
+          prefixField.get(manifest).asInstanceOf[Option[_]]
+        }
+        .flatten
+        .isDefined
+    }
+
+    def stripPrefixFromClass(clazz: Class[_]): String = {
+      val names = clazz.getCanonicalName.split('.')
+      names.lastOption.getOrElse(clazz.getName)
+    }
+
+    case class Replacement(from: String, to: String)
+    def getReplacements(manifest: Manifest[_],
+                        acc: List[Replacement]): List[Replacement] = {
+      val newReplacements = {
+        if (hasPrefix(manifest)) {
+          val clazz = manifest.runtimeClass
+          val projectionName = s"#${clazz.getName}"
+          Replacement(projectionName, s"#${stripPrefixFromClass(clazz)}") :: acc
+        } else acc
+      }
+      manifest.typeArguments.foldLeft(newReplacements) {
+        case (replacements, typeArg) =>
+          getReplacements(typeArg, replacements)
+      }
+    }
+  }
+
+  /**
     * Process all the settings from projects and autoplugins.
     *
     * This method does repetitive computations just for the sake of
@@ -86,8 +132,15 @@ trait PluginProcessor {
     * @return Array of tuples (represented with arrays) of setting name and type.
     */
   def allSettingInfos(state: State): Array[Array[String]] = {
-    def getType(setting: Setting[_]): String =
-      setting.key.key.manifest.toString
+    def getType(setting: Setting[_]): String = {
+      val manifest = setting.key.key.manifest
+      val replacements = ManifestPrinter.getReplacements(manifest, Nil)
+      val stringifiedType = manifest.toString
+      replacements.foldLeft(stringifiedType) {
+        case (finalRepr, replacement) =>
+          finalRepr.replace(replacement.from, replacement.to)
+      }
+    }
 
     val logger = state.log
     val extracted = Project.extract(state)

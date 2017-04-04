@@ -105,4 +105,4 @@ We can see:
 This information helps you understand what the tool is doing and may shed some
 light on potential misbehaviours. I recommend that for a faithful migration, you
 double-check if the keys failed to parse are either input keys or they store
-tasks.
+tasks -- and if they do, you'll need to migrate those keys by yourself.

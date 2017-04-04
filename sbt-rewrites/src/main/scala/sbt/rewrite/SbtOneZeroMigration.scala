@@ -31,7 +31,7 @@ import scalafix.util._
   * reliable enough to be called "semantic". The reasons are the following:
   *
   * - Manifest pretty printer will produce inaccurate type representations.
-  *   For instance, type projections and type closures don't follow Scala syntax.
+  *   For instance, type closures don't follow Scala syntax.
   * - Manifest prints fully qualified names for all names not present in
   *   Scala jars, but there is no way to check this contract is not broken.
   *

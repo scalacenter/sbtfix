@@ -10,8 +10,8 @@ to fill in the gap for missing semantic rewrites. `sbt-migration` aims at helpin
 sbt users port their 0.13.x sbt code to 1.0.x, but it does not promise to do
 the full job for them.
 
-The lack of fully semantic rewrites prevent it from doing 100% safe
-transformations, so manual intervention may be required in corner cases. 
+The lack of fully semantic rewrites prevent this tool from performing 100% safe
+rewrites, so manual intervention may be required in corner cases. 
 
 ## Use
 

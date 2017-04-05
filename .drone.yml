@@ -9,7 +9,7 @@ pipeline:
       - /drone/.git
 
   build:
-    image: scalaplatform/scala:0.5
+    image: scalacenter/scala:1.0
     commands:
       - sbt clean test sbt-rewrites-plugin/scripted
 

@@ -208,7 +208,7 @@ trait SbtBootstrapUtil { self: SbtMigrationKeys =>
         libraryDependencies +=
           (SbtMigrationGroupId %% SbtMigrationName % migratorVersion),
         resolvers += Resolver.bintrayRepo("scalacenter", "releases"),
-        resolvers += Resolver.bintrayIvyRepo("scalameta", "maven")
+        resolvers += Resolver.bintrayRepo("scalameta", "maven")
       )
   }
 

@@ -10,6 +10,7 @@ pipeline:
 
   build:
     image: scalacenter/scala:1.0
+    pull: true
     commands:
       - sbt clean test sbt-rewrites-plugin/scripted
 

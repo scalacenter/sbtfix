@@ -125,11 +125,7 @@ lazy val `sbt-rewrites-plugin` = project
       "-Dplugin.version=" + version.value,
       "-Xmx1g",
       "-Xss16m"
-    ) ++ {
-      // Pass along custom boot properties if specified
-      val bootProps = "sbt.boot.properties"
-      sys.props.get(bootProps).map(x => s"-D$bootProps=$x").toList
-    },
+    ),
     scriptedBufferLog := false,
     fork in Test := true
   )

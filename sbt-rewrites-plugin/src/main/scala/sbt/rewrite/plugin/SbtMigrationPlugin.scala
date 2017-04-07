@@ -49,7 +49,7 @@ object SbtMigrationPlugin
 
   override def globalSettings: Seq[Def.Setting[_]] = {
     Seq(
-      sbtMigrationJar := getZincMegaJar(sbtMigration211, sbtMigration212).value,
+      sbtMigrationJar := getFatJar(sbtMigration211, sbtMigration212).value,
       migrateSbtBuild := {
         val st = streams.value
         val logger = st.log
@@ -212,7 +212,7 @@ trait SbtBootstrapUtil { self: SbtMigrationKeys =>
       )
   }
 
-  protected def getZincMegaJar(
+  protected def getFatJar(
       stubFor211: Project,
       stubFor212: Project): Def.Initialize[Task[File]] = {
     Def.taskDyn[File] {

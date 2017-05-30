@@ -22,9 +22,8 @@ import scalafix.util._
   * If those conditions are not met, the sbt rewriter will not work correctly.
   *
   * Note that some rewrites here present may need semantic information to
-  * disambiguate which sbt macro should be executed. For instance, input keys
-  * need `.evaluated` instead of `.value`. Keys that store tasks or settings
-  * need `.taskValue` instead of `.value`.
+  * disambiguate which sbt macro should be executed. For instance, keys that
+  * store tasks or settings need `.taskValue` instead of `.value`.
   *
   * The sbt runtime interpreter allows the rewrite to get access to all the
   * present sbt keys and analyze their type, however this information is not
@@ -47,7 +46,7 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
     object SbtSelectors {
       val value = ".value"
       val taskValue = ".taskValue"
-      val evaluated = ".evaluated"
+      // val evaluated = ".evaluated"
     }
 
     object SpecialCases {
@@ -114,10 +113,10 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
       val addNewOperator = TokenPatch.AddLeft(opToken, newOperator)
       val rewriteRhs = {
         val requiresTaskValue = existKeys(lhs, SpecialCases.keyOfTasks)
-        val requiresEvaluated = existKeys(lhs, SpecialCases.inputKeys)
+        // val requiresEvaluated = existKeys(lhs, SpecialCases.inputKeys)
         val newSelector =
           if (requiresTaskValue) SbtSelectors.taskValue
-          else if (requiresEvaluated) SbtSelectors.evaluated
+          // else if (requiresEvaluated) SbtSelectors.evaluated
           else SbtSelectors.value
         TokenPatch.AddRight(rhs.tokens.last, newSelector)
       }

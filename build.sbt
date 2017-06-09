@@ -69,14 +69,14 @@ lazy val `sbt-rewrites` = project
   .settings(publishSettings, buildSettings, commonSettings)
   .settings(
     scalacOptions in Compile := compilerOptions,
-    crossScalaVersions := Seq("2.11.9", "2.12.1"),
+    crossScalaVersions := Seq("2.11.11", "2.12.2"),
     // Using 2.11.x until scalafix publishes 2.12 artifacts
     scalaVersion := crossScalaVersions.value.head,
     libraryDependencies ++= Vector(
       "com.github.pathikrit" %% "better-files" % "2.17.1",
       "io.get-coursier" %% "coursier" % "1.0.0-M15-5",
       "io.get-coursier" %% "coursier-cache" % "1.0.0-M15-5",
-      "ch.epfl.scala" % "scalafix-cli" % "0.3.3+18-3f58c785" cross CrossVersion.full,
+      "ch.epfl.scala" % "scalafix-cli" % "0.4.2" cross CrossVersion.full,
       "org.scalatest" %% "scalatest" % "3.0.0" % "test"
     ),
     assemblyJarName in assembly :=

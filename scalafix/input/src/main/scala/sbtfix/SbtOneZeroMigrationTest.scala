@@ -1,4 +1,4 @@
-/* ONLY
+/*
 rewrite = "scala:sbtfix.SbtOneZeroMigration"
  */
 package sbtfix
@@ -6,32 +6,32 @@ package sbtfix
 import sbt._
 
 object SbtOneZeroMigrationTest {
-  lazy val target = taskKey[Seq[File]]("Target to be reassigned.")
-  lazy val single = taskKey[File]("Single.")
-  lazy val seed = taskKey[Seq[File]]("Seed.")
-
   object `<++=` {
-    seed := List(new File("."))
-    target <++= seed
-    target <++= (seed)
-    target <++= (seed in ThisBuild)
-    target <++= Def.task(seed.value)
+    val key = taskKey[Seq[File]]("Seed.")
+    val target = taskKey[Seq[File]]("Target to be reassigned.")
+    key := List(new File("."))
+    target <++= key
+    target <++= (key)
+    target <++= (key in ThisBuild)
+    target <++= Def.task(key.value)
     target <++= Def.task {
       println("Executing task.")
-      (seed).value
+      (key).value
     }
   }
 
   object `<+=` {
-    single := new File(".")
-    target <+= single
-    target <+= (single)
-    target <+= (single in ThisBuild)
-    target <+= Def.task(single.value)
-    target.<+=[File](Def.task(single.value))
+    val key = taskKey[File]("Single.")
+    val target = taskKey[Seq[File]]("Target to be reassigned.")
+    key := new File(".")
+    target <+= key
+    target <+= (key)
+    target <+= (key in ThisBuild)
+    target <+= Def.task(key.value)
+    target.<+=[File](Def.task(key.value))
     target <+= Def.task {
       println("Executing task.")
-      (single).value
+      (key).value
     }
   }
 
@@ -57,5 +57,11 @@ object SbtOneZeroMigrationTest {
       println("Executing setting.")
       name.value
     }
+  }
+
+  object `special<<=` {
+    import Keys.run
+    val key = inputKey[Unit]("Seed.")
+    run <<= key
   }
 }

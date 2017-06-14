@@ -1,29 +1,27 @@
-package fix
+package sbtfix
 
 import scala.collection.immutable.Seq
-import scala.meta._
 import scala.meta._
 import scala.meta.sbthost.Sbthost
 import scala.meta.tokens.Token.LeftParen
 import scala.meta.tokens.Token.RightParen
 import scalafix._
 
-case class Sbtmigrationrewrites_v1(brokenMirror: Mirror)
+case class SbtOneZeroMigration(brokenMirror: Mirror)
     extends SemanticRewrite(Sbthost.patchMirror(brokenMirror)) {
   val mirror = ImplicitMirror
   def rewrite(ctx: RewriteCtx): Patch = {
     ctx.reporter.info(mirror.database.toString())
     ctx.reporter.info(ctx.tree.syntax)
     ctx.reporter.info(ctx.tree.structure)
-    SbtOneZeroMigration(mirror, ctx).rewrite.asPatch
+    SbtOneZeroMigrator(mirror, ctx).rewrite.asPatch
   }
 }
 
 /**
   * Migrates code from sbt 0.13.x to sbt 1.0.x.
-  *
   */
-case class SbtOneZeroMigration(mirror: Mirror, ctx: RewriteCtx) {
+case class SbtOneZeroMigrator(mirror: Mirror, ctx: RewriteCtx) {
   sealed abstract class SbtOperator {
     val operator: String
     val newOperator: String

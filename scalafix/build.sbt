@@ -38,13 +38,13 @@ lazy val tests = project
       "ch.epfl.scala" % "scalafix-testkit" % "0.4.2" % Test cross CrossVersion.full
     ),
     test.in(Test) := test.in(Test).dependsOn(compile.in(input, Compile)).value,
-    buildInfoPackage := "fix",
+    buildInfoPackage := "sbtfix",
     buildInfoKeys := Seq[BuildInfoKey](
-      "inputSourceroot" ->
+      "inputSourceRoot" ->
         sourceDirectory.in(input, Compile).value,
-      "outputSourceroot" ->
+      "outputSourceRoot" ->
         sourceDirectory.in(output, Compile).value,
-      "inputClassdirectory" ->
+      "inputClassDirectory" ->
         classDirectory.in(input, Compile).value
     )
   )

@@ -13,6 +13,7 @@ pipeline:
     pull: true
     commands:
       - sbt clean test sbt-rewrites-plugin/scripted
+      - cd scalafix && sbt tests/test
 
   sftp_cache:
     image: plugins/sftp-cache

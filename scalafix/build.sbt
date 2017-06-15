@@ -22,7 +22,7 @@ lazy val input = project.settings(
   sbtPlugin := true,
   scalacOptions += s"-P:sbthost:sourceroot:${sourceDirectory.in(Compile).value}",
   addCompilerPlugin(
-    "org.scalameta" % "sbthost-nsc" % "0.1.0-RC3" cross CrossVersion.full)
+    "org.scalameta" % "sbthost-nsc" % "0.1.0" cross CrossVersion.full)
 )
 
 lazy val output = project.settings(

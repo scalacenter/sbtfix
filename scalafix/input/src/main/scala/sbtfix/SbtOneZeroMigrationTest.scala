@@ -60,8 +60,53 @@ object SbtOneZeroMigrationTest {
   }
 
   object `special<<=` {
-    import Keys.run
+    import Keys.{run, testOnly, runMain, testQuick}
     val key = inputKey[Unit]("Seed.")
+    key := {}
     run <<= key
+    run <<= (key in ThisProject)
+    run <<= key in ThisProject
+    run <<= Def.inputTask { key.value }
+    run <<= Def.inputTask { (key).value }
+    run <<= Def.inputTask {
+      println("Executing task.")
+      key.value
+    }
+
+    val key2 = inputKey[Unit]("Seed 2.")
+    key2 := {}
+    runMain <<= key2
+    runMain <<= (key2 in ThisProject)
+    runMain <<= key2 in ThisProject
+    runMain <<= Def.inputTask { key2.value }
+    runMain <<= Def.inputTask { (key2).value }
+    runMain <<= Def.inputTask {
+      println("Executing task.")
+      key2.value
+    }
+
+    val key3 = inputKey[Unit]("Seed 3.")
+    key3 := {}
+    testOnly <<= key3
+    testOnly <<= (key3 in ThisProject)
+    testOnly <<= key3 in ThisProject
+    testOnly <<= Def.inputTask { key3.value }
+    testOnly <<= Def.inputTask { (key3).value }
+    testOnly <<= Def.inputTask {
+      println("Executing task.")
+      key3.value
+    }
+
+    val key4 = inputKey[Unit]("Seed 4.")
+    key4 := {}
+    testQuick <<= key4
+    testQuick <<= (key4 in ThisProject)
+    testQuick <<= key4 in ThisProject
+    testQuick <<= Def.inputTask { key4.value }
+    testQuick <<= Def.inputTask { (key4).value }
+    testQuick <<= Def.inputTask {
+      println("Executing task.")
+      key4.value
+    }
   }
 }

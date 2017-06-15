@@ -57,8 +57,53 @@ object SbtOneZeroMigrationTest {
   }
 
   object `special<<=` {
-    import Keys.run
+    import Keys.{run, testOnly, runMain, testQuick}
     val key = inputKey[Unit]("Seed.")
-    run := key.value
+    key := {}
+    run := key.evaluated
+    run := (key in ThisProject).evaluated
+    run := (key in ThisProject).evaluated
+    run := (Def.inputTask { key.value }).evaluated
+    run := (Def.inputTask { (key).value }).evaluated
+    run := (Def.inputTask {
+      println("Executing task.")
+      key.value
+    }).evaluated
+
+    val key2 = inputKey[Unit]("Seed 2.")
+    key2 := {}
+    runMain := key2.evaluated
+    runMain := (key2 in ThisProject).evaluated
+    runMain := (key2 in ThisProject).evaluated
+    runMain := (Def.inputTask { key2.value }).evaluated
+    runMain := (Def.inputTask { (key2).value }).evaluated
+    runMain := (Def.inputTask {
+      println("Executing task.")
+      key2.value
+    }).evaluated
+
+    val key3 = inputKey[Unit]("Seed 3.")
+    key3 := {}
+    testOnly := key3.evaluated
+    testOnly := (key3 in ThisProject).evaluated
+    testOnly := (key3 in ThisProject).evaluated
+    testOnly := (Def.inputTask { key3.value }).evaluated
+    testOnly := (Def.inputTask { (key3).value }).evaluated
+    testOnly := (Def.inputTask {
+      println("Executing task.")
+      key3.value
+    }).evaluated
+
+    val key4 = inputKey[Unit]("Seed 4.")
+    key4 := {}
+    testQuick := key4.evaluated
+    testQuick := (key4 in ThisProject).evaluated
+    testQuick := (key4 in ThisProject).evaluated
+    testQuick := (Def.inputTask { key4.value }).evaluated
+    testQuick := (Def.inputTask { (key4).value }).evaluated
+    testQuick := (Def.inputTask {
+      println("Executing task.")
+      key4.value
+    }).evaluated
   }
 }

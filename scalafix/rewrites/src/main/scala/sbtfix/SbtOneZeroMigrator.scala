@@ -22,20 +22,18 @@ case class SbtOneZeroMigration(brokenMirror: Mirror)
   * Migrates code from sbt 0.13.x to sbt 1.0.x.
   */
 case class SbtOneZeroMigrator(mirror: Mirror, ctx: RewriteCtx) {
+  implicit val mirror0 = mirror
   sealed abstract class SbtOperator {
     val operator: String
     val newOperator: String
 
     object SbtSelectors {
       val value = ".value"
-      val taskValue = ".taskValue"
-      // val evaluated = ".evaluated"
+      val evaluated = ".evaluated"
     }
 
-    object SpecialCases {
-//      val ctx: Interpreted = sbtContext.interpretContext
-      val keyOfTasks: Set[String] = Set.empty
-      val inputKeys: Set[String] = Set.empty
+    object SbtTypes {
+      val inputKey: String = "sbt.InputKey["
     }
 
     def unapply(tree: Term): Option[(Term, Token, Term.Arg)] = tree match {
@@ -51,29 +49,29 @@ case class SbtOneZeroMigrator(mirror: Mirror, ctx: RewriteCtx) {
         None
     }
 
-    private def wrapInParenthesis(tokens: Tokens): List[Patch] = {
-      List(
-        ctx.addLeft(tokens.head, "("),
-        ctx.addRight(tokens.last, ")")
-      )
-    }
+    private def wrapInParenthesis(tokens: Tokens): List[Patch] =
+      List(ctx.addLeft(tokens.head, "("), ctx.addRight(tokens.last, ")"))
 
     private def isParensWrapped(tokens: Tokens): Boolean = {
       tokens.head.isInstanceOf[LeftParen] &&
       tokens.last.isInstanceOf[RightParen]
     }
 
-    private def existKeys(lhs: Term, keyNames: Set[String]): Boolean = {
+    private def infoStartsWith(r: Term.Ref, prefix: String): Boolean =
+      r.symbol.denot.info.startsWith(prefix)
+
+    private def existKeys(lhs: Term, typePrefix: String): Boolean = {
       val singleNames = lhs match {
-        case tname @ Term.Name(name) if keyNames.contains(name) => tname :: Nil
+        case tn @ Term.Name(name) if infoStartsWith(tn, typePrefix) =>
+          tn :: Nil
         case _ => Nil
       }
       val scopedNames = lhs.collect {
-        case Term.Select(Term.Name(name), Term.Name("in"))
-            if keyNames.contains(name) =>
+        case Term.Select(tn @ Term.Name(name), Term.Name("in"))
+            if infoStartsWith(tn, typePrefix) =>
           name
-        case Term.ApplyInfix(Term.Name(name), Term.Name("in"), _, _)
-            if keyNames.contains(name) =>
+        case Term.ApplyInfix(tn @ Term.Name(name), Term.Name("in"), _, _)
+            if infoStartsWith(tn, typePrefix) =>
           name
       }
       (singleNames ++ scopedNames).nonEmpty
@@ -94,11 +92,9 @@ case class SbtOneZeroMigrator(mirror: Mirror, ctx: RewriteCtx) {
       val removeOperator = ctx.removeToken(opToken)
       val addNewOperator = ctx.addLeft(opToken, newOperator)
       val rewriteRhs = {
-        val requiresTaskValue = existKeys(lhs, SpecialCases.keyOfTasks)
-        // val requiresEvaluated = existKeys(lhs, SpecialCases.inputKeys)
+        val requiresEvaluated = existKeys(lhs, SbtTypes.inputKey)
         val newSelector =
-          if (requiresTaskValue) SbtSelectors.taskValue
-          // else if (requiresEvaluated) SbtSelectors.evaluated
+          if (requiresEvaluated) SbtSelectors.evaluated
           else SbtSelectors.value
         ctx.addRight(rhs.tokens.last, newSelector)
       }

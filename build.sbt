@@ -1,74 +1,13 @@
-lazy val publishSettings: Seq[Setting[_]] = Seq(
-  publishMavenStyle := true,
-  bintrayOrganization := Some("scalacenter"),
-  bintrayRepository := "releases",
-  bintrayPackageLabels := Seq("sbt", "scalafix", "migration"),
-  publishTo := (publishTo in bintray).value,
-  publishArtifact in Test := false,
-  // This repository is under MPLv2 because it was originally @jvican's
-  // personal project and then was moved to Scala Center governance.
-  licenses := Seq("MPL-2.0" -> url("https://opensource.org/licenses/MPL-2.0")),
-  homepage := Some(url("https://github.com/scalaplatform/platform")),
-  autoAPIMappings := true,
-  apiURL := Some(url("https://scalaplatform.github.io/platform")),
-  pomExtra :=
-    <developers>
-      <developer>
-        <id>jvican</id>
-        <name>Jorge Vicente Cantero</name>
-        <url></url>
-      </developer>
-    </developers>
-)
-
-lazy val noPublish = Seq(
-  publishArtifact := false,
-  publish := {},
-  PgpKeys.publishSigned := {},
-  publishLocal := {}
-)
-
-lazy val buildSettings: Seq[Setting[_]] = Seq(
-  organization := "ch.epfl.scala",
-  resolvers += Resolver.jcenterRepo,
-  resolvers += Resolver.bintrayRepo("scalameta", "maven"),
-  updateOptions := updateOptions.value.withCachedResolution(true)
-)
-
-lazy val compilerOptions = Seq(
-  "-deprecation",
-  "-encoding",
-  "UTF-8",
-  "-feature",
-  "-language:existentials",
-  "-language:higherKinds",
-  "-language:implicitConversions",
-  "-unchecked",
-  "-Yno-adapted-args",
-  "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen",
-  "-Xfuture",
-  "-Xlint"
-)
-
-lazy val commonSettings: Seq[Setting[_]] = Seq(
-  triggeredMessage in ThisBuild := Watched.clearWhenTriggered,
-  watchSources += baseDirectory.value / "resources",
-  scalacOptions in (Compile, console) := compilerOptions,
-  testOptions in Test += Tests.Argument("-oD")
-)
-
-// Don't aggregate the plugin here
+// Remember, only aggregates `sbt-rewrites`.
 lazy val `sbt-migration-tool` = project
   .in(file("."))
-  .settings(commonSettings, buildSettings, noPublish)
+  .settings(noPublish)
   .aggregate(`sbt-rewrites`)
   .settings(watchSources += (baseDirectory in `sbt-rewrites-plugin`).value)
 
+/** Defines the sbt-rewrites project that contains the scalafix code. */
 lazy val `sbt-rewrites` = project
-  .settings(publishSettings, buildSettings, commonSettings)
   .settings(
-    scalacOptions in Compile := compilerOptions,
     crossScalaVersions := Seq("2.11.9", "2.12.1"),
     // Using 2.11.x until scalafix publishes 2.12 artifacts
     scalaVersion := crossScalaVersions.value.head,
@@ -82,50 +21,39 @@ lazy val `sbt-rewrites` = project
     assemblyJarName in assembly :=
       name.value + "_" + scalaVersion.value + "-" + version.value + "-assembly.jar",
     test in assembly := {},
-    packagedArtifact in Compile in packageBin := {
-      val temp = (packagedArtifact in Compile in packageBin).value
-      val (art, slimJar) = temp
-      val fatJar =
-        new File(crossTarget.value + "/" + (assemblyJarName in assembly).value)
-      val _ = assembly.value
-      IO.copy(List(fatJar -> slimJar), overwrite = true)
-      (art, slimJar)
-    },
     publishArtifact in Compile := true,
-    Keys.`package` in Compile := {
+    packagedArtifact in Compile in packageBin := Def.taskDyn {
+      val temp = (packagedArtifact in Compile in packageBin).value
+      val toReturn @ (_, slimJar) = temp
+      val toEvaluate = replaceJar(slimJar)
+      Def.task {
+        toEvaluate.value
+        toReturn
+      }
+    }.value,
+    Keys.`package` in Compile := Def.taskDyn {
       val slimJar = (Keys.`package` in Compile).value
-      val fatJar =
-        new File(crossTarget.value + "/" + (assemblyJarName in assembly).value)
-      val _ = assembly.value
-      IO.copy(List(fatJar -> slimJar), overwrite = true)
-      slimJar
-    }
+      val toEvaluate = replaceJar(slimJar)
+      Def.task {
+        toEvaluate.value
+        slimJar
+      }
+    }.value
   )
 
+/** Defines the sbt-rewrites-plugin which cannot depend on `sbt-rewrites`.
+  * `sbt-rewrites` is resolved in sbt 0.13.x explicitly and class-loaded
+  * to be able to call Scala 2.12 artifacts from Scala 2.10.x. */
 lazy val `sbt-rewrites-plugin` = project
-  .settings(publishSettings, buildSettings, commonSettings)
-  .settings(ScriptedPlugin.scriptedSettings: Seq[Setting[_]])
+  .settings(scriptedDefaults)
   .settings(
     name := "sbt-migrator",
     sbtPlugin := true,
     scalaVersion := "2.10.6",
     bintrayRepository := "sbt-releases",
     publishMavenStyle := false,
-    publishLocal := {
-      publishLocal
-        .dependsOn(publishLocal in `sbt-rewrites`)
-        .value
-    },
-    publish := {
-      publish
-        .dependsOn(publishLocal in `sbt-rewrites`)
-        .value
-    },
-    scriptedLaunchOpts := Seq(
-      "-Dplugin.version=" + version.value,
-      "-Xmx1g",
-      "-Xss16m"
-    ),
-    scriptedBufferLog := false,
+    publish := publish.dependsOn(publish in `sbt-rewrites`).value,
+    publishLocal :=
+      publishLocal.dependsOn(publishLocal in `sbt-rewrites`).value,
     fork in Test := true
   )

@@ -11,8 +11,11 @@ object Defaults extends AutoPlugin {
 
   override def globalSettings: Seq[Setting[_]] = List(
     PgpKeys.pgpPassphrase := sys.env.get("PGP_PASSWORD").map(_.toArray),
-    PgpKeys.pgpPublicRing := file("LOCATION_OF_YOUR_CI_PUBLIC_RING"),
-    PgpKeys.pgpSecretRing := file("LOCATION_OF_YOUR_CI_SECRET_RING"),
+    PgpKeys.pgpPublicRing := file("/drone/.gnupg/pubring.asc"),
+    PgpKeys.pgpSecretRing := file("/drone/.gnupg/secring.asc")
+  )
+
+  override def buildSettings: Seq[Setting[_]] = List(
     BintrayKeys.bintrayOrganization := Some(Org),
     BintrayKeys.bintrayRepository := "releases",
     Keys.licenses := Seq(
@@ -26,10 +29,7 @@ object Defaults extends AutoPlugin {
                 "Jorge Vicente Cantero",
                 "jorge@vican.me",
                 url("https://github.com/jvican"))
-    )
-  )
-
-  override def buildSettings: Seq[Setting[_]] = List(
+    ),
     Keys.organization := "ch.epfl.scala",
     Keys.resolvers += Resolver.jcenterRepo,
     Keys.resolvers += Resolver.bintrayRepo("scalameta", "maven"),
@@ -64,7 +64,8 @@ trait AutoImported {
 
   def replaceJar(slimJar: File): Def.Initialize[Task[Unit]] = Def.task {
     import sbtassembly.AssemblyKeys
-    val fileName = (AssemblyKeys.assemblyJarName in AssemblyKeys.assembly).value
+    val fileName =
+      (AssemblyKeys.assemblyJarName in AssemblyKeys.assembly).value
     val fatJar = new File(s"${Keys.crossTarget.value}/$fileName")
     val _ = AssemblyKeys.assembly.value
     IO.copy(List(fatJar -> slimJar), overwrite = true)

@@ -10,7 +10,6 @@ object Defaults extends AutoPlugin {
   object autoImport extends AutoImported
 
   override def globalSettings: Seq[Setting[_]] = List(
-    // The sbt-pgp requirements for tag-driven releases and Maven Central sync
     PgpKeys.pgpPassphrase := sys.env.get("PGP_PASSWORD").map(_.toArray),
     PgpKeys.pgpPublicRing := file("LOCATION_OF_YOUR_CI_PUBLIC_RING"),
     PgpKeys.pgpSecretRing := file("LOCATION_OF_YOUR_CI_SECRET_RING"),

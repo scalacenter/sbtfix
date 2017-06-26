@@ -1,5 +1,5 @@
 /*
-rewrite = "scala:sbtfix.SbtOneZeroMigration"
+rewrite = "scala:fix.Sbtfix_v1"
  */
 package sbtfix
 

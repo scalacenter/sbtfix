@@ -1,4 +1,4 @@
-package sbtfix
+package fix
 
 import scala.collection.immutable.Seq
 import scala.meta._
@@ -7,7 +7,7 @@ import scala.meta.tokens.Token.LeftParen
 import scala.meta.tokens.Token.RightParen
 import scalafix._
 
-case class SbtOneZeroMigration(brokenMirror: Mirror)
+case class Sbtfix_v1(brokenMirror: Mirror)
     extends SemanticRewrite(Sbthost.patchMirror(brokenMirror)) {
   val mirror = ImplicitMirror
   def rewrite(ctx: RewriteCtx): Patch = {

@@ -8,19 +8,28 @@ lazy val `sbt-migration-tool` = project
 /** Defines the sbt-rewrites project that contains the scalafix code. */
 lazy val `sbt-rewrites` = project
   .settings(
-    crossScalaVersions := Seq("2.11.9", "2.12.1"),
+    crossScalaVersions := Seq("2.11.11", "2.12.1"),
     // Using 2.11.x until scalafix publishes 2.12 artifacts
     scalaVersion := crossScalaVersions.value.head,
     libraryDependencies ++= Vector(
       "com.github.pathikrit" %% "better-files" % "2.17.1",
       "io.get-coursier" %% "coursier" % "1.0.0-M15-5",
       "io.get-coursier" %% "coursier-cache" % "1.0.0-M15-5",
-      "ch.epfl.scala" % "scalafix-cli" % "0.3.3+18-3f58c785" cross CrossVersion.full,
+      "ch.epfl.scala" %% "scalafix-cli" % "0.5.0-M1" cross CrossVersion.full,
       "org.scalatest" %% "scalatest" % "3.0.0" % "test"
     ),
     assemblyJarName in assembly :=
       name.value + "_" + scalaVersion.value + "-" + version.value + "-assembly.jar",
     test in assembly := {},
+    assemblyMergeStrategy in assembly := {
+      case PathList(ps @ _ *) if ps.last endsWith ".class" =>
+        MergeStrategy.first
+      case PathList(ps @ _ *) if ps.last endsWith ".proto" =>
+        MergeStrategy.first
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    },
     publishArtifact in Compile := true,
     packagedArtifact in Compile in packageBin := Def.taskDyn {
       val temp = (packagedArtifact in Compile in packageBin).value

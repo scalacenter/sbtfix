@@ -117,9 +117,9 @@ class SbtOneZeroMigrationSpec extends FunSuite {
                    SbtFiles.resourceGeneratorsExpected)
   }
 
-/*  test("fix input tasks that need evaluated") {
+  test("fix input tasks that need evaluated") {
     testSbtRewrite(SbtFiles.evaluatedTest, SbtFiles.evaluatedExpected)
-  }*/
+  }
 
   /*  test("fix example in official docs") {
     val dir = createTempDir

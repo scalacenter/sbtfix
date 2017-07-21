@@ -45,8 +45,8 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
 
     object SbtSelectors {
       val value = ".value"
-      val taskValue = ".taskValue"
-      // val evaluated = ".evaluated"
+      // val taskValue = ".taskValue"
+      val evaluated = ".evaluated"
     }
 
     object SpecialCases {
@@ -112,16 +112,17 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
       val removeOperator = TokenPatch.Remove(opToken)
       val addNewOperator = TokenPatch.AddLeft(opToken, newOperator)
       val rewriteRhs = {
-        val requiresTaskValue = existKeys(lhs, SpecialCases.keyOfTasks)
-        // val requiresEvaluated = existKeys(lhs, SpecialCases.inputKeys)
+        val requiresEvaluated = existKeys(lhs, SpecialCases.inputKeys)
+        val requiresValue = !existKeys(lhs, SpecialCases.keyOfTasks)
         val newSelector =
-          if (requiresTaskValue) SbtSelectors.taskValue
-          // else if (requiresEvaluated) SbtSelectors.evaluated
-          else SbtSelectors.value
-        TokenPatch.AddRight(rhs.tokens.last, newSelector)
+          if (requiresEvaluated) Some(SbtSelectors.evaluated)
+          else if (requiresValue) Some(SbtSelectors.value)
+          else None
+
+        newSelector.map(TokenPatch.AddRight(rhs.tokens.last, _))
       }
 
-      (removeOperator :: addNewOperator :: wrapExpression) ++ Seq(rewriteRhs)
+      removeOperator :: addNewOperator :: wrapExpression ++ rewriteRhs.toList
     }
   }
 

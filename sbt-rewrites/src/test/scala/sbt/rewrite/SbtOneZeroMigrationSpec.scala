@@ -4,9 +4,10 @@ import java.io.File
 
 import org.scalatest.FunSuite
 
-import scalafix.cli.{Cli, ExitStatus, ScalafixOptions}
-import scalafix.config.ScalafixConfig
-import scalafix.util.FileOps
+import scalafix.cli.{Cli, CliRunner, ExitStatus}
+import scalafix.cli.CliCommand.{PrintAndExit, RunScalafix}
+import scalafix.internal.util.FileOps
+import metaconfig.Configured.{NotOk, Ok}
 
 class SbtOneZeroMigrationSpec extends FunSuite {
   object SbtFiles {
@@ -49,8 +50,7 @@ class SbtOneZeroMigrationSpec extends FunSuite {
   }
 
   private def createFile(contents: String, inDir: File): File = {
-    // Trick Scalafix temporarily until it supports .sbt-ending files
-    val file = File.createTempFile("test-file", ".scala", inDir)
+    val file = File.createTempFile("test-file", ".sbt", inDir)
     FileOps.writeFile(file, contents)
     file
   }
@@ -71,13 +71,13 @@ class SbtOneZeroMigrationSpec extends FunSuite {
     // Default keys have to stay for `SbtOneZeroMigrationSpec` to work for now
     val settingInfos = DefaultSbtKeys.all.map(SettingInfo.apply)
     val ctx = SbtContext(settingInfos)
-    val config = ScalafixConfig(dialect = scala.meta.dialects.Sbt0137,
-                                rewrites = List(SbtOneZeroMigration(ctx)))
-    ctx.interpretContext -> Cli.runOn(
-      ScalafixOptions(files = List(sbtFile.getAbsolutePath),
-                      inPlace = true,
-                      config = Some(config))
-    )
+    val sbtRewrite = SbtOneZeroMigration(ctx)
+    val options = Cli.default.copy(files = List(sbtFile.getAbsolutePath),
+                                   inPlace = true)
+    ctx.interpretContext -> (CliRunner.fromOptions(options, sbtRewrite) match {
+      case Ok(runner) => runner.run()
+      case NotOk(err) => fail(err.msg)
+    })
   }
 
   final val defaultKeyOfTasks = List("sourceGenerators", "resourceGenerators")
@@ -117,9 +117,9 @@ class SbtOneZeroMigrationSpec extends FunSuite {
                    SbtFiles.resourceGeneratorsExpected)
   }
 
-/*  test("fix input tasks that need evaluated") {
+  test("fix input tasks that need evaluated") {
     testSbtRewrite(SbtFiles.evaluatedTest, SbtFiles.evaluatedExpected)
-  }*/
+  }
 
   /*  test("fix example in official docs") {
     val dir = createTempDir

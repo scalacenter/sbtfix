@@ -1,10 +1,9 @@
 package sbt.rewrite
 
-import scala.collection.immutable.Seq
 import scala.meta._
 import scala.meta.tokens.Token.{LeftParen, RightParen}
 import scalafix.rewrite.{Rewrite, RewriteCtx}
-import scalafix.util._
+import scalafix.patch.{Patch, TokenPatch}
 
 /**
   * Migrates code from sbt 0.13.x to sbt 1.0.x.
@@ -38,15 +37,15 @@ import scalafix.util._
   * best-effort to migrate sbt code from 0.13.x to 1.0.x. They will work in most
   * of the cases. In the rest, your builds may need some manual intervention.
   */
-case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
+case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite {
   sealed abstract class SbtOperator {
     val operator: String
     val newOperator: String
 
     object SbtSelectors {
       val value = ".value"
-      val taskValue = ".taskValue"
-      // val evaluated = ".evaluated"
+      // val taskValue = ".taskValue"
+      val evaluated = ".evaluated"
     }
 
     object SpecialCases {
@@ -56,7 +55,7 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
       ctx.reportToUser()
     }
 
-    def unapply(tree: Term): Option[(Term, Token, Term.Arg)] = tree match {
+    def unapply(tree: Term): Option[(Term, Token, Term)] = tree match {
       case Term.ApplyInfix(lhs, o @ Term.Name(`operator`), _, Seq(rhs)) =>
         Some((lhs, o.tokens.head, rhs))
       case Term.Apply(Term.Select(lhs, o @ Term.Name(`operator`)), Seq(rhs)) =>
@@ -69,10 +68,11 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
         None
     }
 
-    private def wrapInParenthesis(tokens: Tokens): List[Patch] = {
+    private def wrapInParenthesis(ctx: RewriteCtx,
+                                  tokens: Tokens): List[Patch] = {
       List(
-        TokenPatch.AddLeft(tokens.head, "("),
-        TokenPatch.AddRight(tokens.last, ")")
+        ctx.addLeft(tokens.head, "("),
+        ctx.addRight(tokens.last, ")")
       )
     }
 
@@ -97,31 +97,33 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
       (singleNames ++ scopedNames).nonEmpty
     }
 
-    def rewriteDslOperator(lhs: Term,
+    def rewriteDslOperator(ctx: RewriteCtx,
+                           lhs: Term,
                            opToken: Token,
-                           rhs: Term.Arg): List[Patch] = {
+                           rhs: Term): List[Patch] = {
       val wrapExpression = rhs match {
         case arg @ Term.Apply(_, Seq(_: Term.Block))
             if !isParensWrapped(arg.tokens) =>
-          wrapInParenthesis(arg.tokens)
+          wrapInParenthesis(ctx, arg.tokens)
         case arg: Term.ApplyInfix if !isParensWrapped(arg.tokens) =>
-          wrapInParenthesis(arg.tokens)
+          wrapInParenthesis(ctx, arg.tokens)
         case _ => Nil
       }
 
-      val removeOperator = TokenPatch.Remove(opToken)
-      val addNewOperator = TokenPatch.AddLeft(opToken, newOperator)
+      val removeOperator = ctx.removeToken(opToken)
+      val addNewOperator = ctx.addLeft(opToken, newOperator)
       val rewriteRhs = {
-        val requiresTaskValue = existKeys(lhs, SpecialCases.keyOfTasks)
-        // val requiresEvaluated = existKeys(lhs, SpecialCases.inputKeys)
+        val requiresEvaluated = existKeys(lhs, SpecialCases.inputKeys)
+        val requiresValue = !existKeys(lhs, SpecialCases.keyOfTasks)
         val newSelector =
-          if (requiresTaskValue) SbtSelectors.taskValue
-          // else if (requiresEvaluated) SbtSelectors.evaluated
-          else SbtSelectors.value
-        TokenPatch.AddRight(rhs.tokens.last, newSelector)
+          if (requiresEvaluated) Some(SbtSelectors.evaluated)
+          else if (requiresValue) Some(SbtSelectors.value)
+          else None
+
+        newSelector.map(ctx.addRight(rhs.tokens.last, _))
       }
 
-      (removeOperator :: addNewOperator :: wrapExpression) ++ Seq(rewriteRhs)
+      removeOperator :: addNewOperator :: wrapExpression ++ rewriteRhs.toList
     }
   }
 
@@ -140,14 +142,15 @@ case class SbtOneZeroMigration(sbtContext: SbtContext) extends Rewrite[Any] {
     override final val newOperator: String = "++="
   }
 
-  def rewrite[T](ctx: RewriteCtx[T]): Seq[Patch] = {
-    ctx.tree.collect {
-      case `<<=`(lhs: Term, opToken: Token, rhs: Term.Arg) =>
-        `<<=`.rewriteDslOperator(lhs, opToken, rhs)
-      case `<+=`(lhs: Term, opToken: Token, rhs: Term.Arg) =>
-        `<+=`.rewriteDslOperator(lhs, opToken, rhs)
-      case `<++=`(lhs: Term, opToken: Token, rhs: Term.Arg) =>
-        `<++=`.rewriteDslOperator(lhs, opToken, rhs)
+  override def rewrite(ctx: RewriteCtx): Patch = {
+    val patches = ctx.tree.collect {
+      case `<<=`(lhs: Term, opToken: Token, rhs: Term) =>
+        `<<=`.rewriteDslOperator(ctx, lhs, opToken, rhs)
+      case `<+=`(lhs: Term, opToken: Token, rhs: Term) =>
+        `<+=`.rewriteDslOperator(ctx, lhs, opToken, rhs)
+      case `<++=`(lhs: Term, opToken: Token, rhs: Term) =>
+        `<++=`.rewriteDslOperator(ctx, lhs, opToken, rhs)
     }.flatten
+    patches.asPatch
   }
 }

@@ -1,18 +1,20 @@
-lazy val target = taskKey[Seq[File]]("Target to be reassigned.")
+lazy val seqKey = taskKey[Seq[File]]("Target to be reassigned.")
 lazy val seed = taskKey[File]("Seed.")
-seed := new File(".")
 
-target <+= seed
+seqKey := Seq.empty
+seed in ThisBuild := new File(".")
 
-target <+= (seed)
+seqKey <+= seed
 
-target <+= (seed in ThisBuild)
+seqKey <+= (seed)
 
-target <+= Def.task(seed.value)
+seqKey <+= (seed in ThisBuild)
 
-target.<+=[File](Def.task(seed.value))
+seqKey <+= Def.task(seed.value)
 
-target <+= Def.task {
+seqKey.<+=[File](Def.task(seed.value))
+
+seqKey <+= Def.task {
   println("Executing task.")
   (seed).value
 }

@@ -8,7 +8,6 @@ import sbt.{Def, _}
 import sbt.Keys._
 import sbt.plugins.JvmPlugin
 
-import scala.reflect.ClassTag
 import scala.util.matching.Regex
 
 trait SbtMigrationKeys {
@@ -64,8 +63,11 @@ object SbtMigrationPlugin
           cachedEntrypoint = getProxyMethod(clazz)
         }
         val settingInfos = allSettingInfos(state.value)
-        val sbtDir: File = (baseDirectory in ThisBuild).value
-        cachedEntrypoint.invoke(cachedInstance, sbtDir, settingInfos)
+        val baseDir = (baseDirectory in ThisBuild).value
+        val sbtDir: File = baseDir./("project")
+        val sbtFiles = baseDir.*("*.sbt").get
+        val toRewrite: Array[File] = (sbtDir +: sbtFiles).toArray
+        cachedEntrypoint.invoke(cachedInstance, toRewrite, settingInfos)
       }
     )
   }
@@ -171,7 +173,7 @@ trait ReflectionUtils {
   def getProxyMethod(clazz: Class[_]): reflect.Method = {
     clazz.getDeclaredMethod(
       RunMethod,
-      classOf[File],
+      classOf[Array[File]],
       classOf[Array[Array[String]]]
     )
   }

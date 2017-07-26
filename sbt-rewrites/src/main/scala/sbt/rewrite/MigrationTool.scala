@@ -7,10 +7,11 @@ import scalafix.cli.CliCommand.{PrintAndExit, RunScalafix}
 import metaconfig.Configured.{NotOk, Ok}
 
 final class MigrationTool {
-  private def migrateBuild(rootFolder: File,
+  private def migrateBuild(toRewrite: Array[File],
                            sbtContext: SbtContext): ExitStatus = {
     val sbtRewrite = SbtOneZeroMigration(sbtContext)
-    val options = Cli.default.copy(files = List(rootFolder.getAbsolutePath),
+    val toRewritePaths = toRewrite.map(_.getAbsolutePath).toList
+    val options = Cli.default.copy(files = toRewritePaths,
                                    inPlace = true)
     CliRunner.fromOptions(options, sbtRewrite) match {
       case Ok(runner) => runner.run()
@@ -18,10 +19,10 @@ final class MigrationTool {
     }
   }
 
-  def migrateBuildFromSbt(rootFolder: File,
+  def migrateBuildFromSbt(toRewrite: Array[File],
                           runtimeSbtInfo: Array[Array[String]]): Int = {
     val settingInfos = runtimeSbtInfo.map(SettingInfo.apply)
     val sbtContext = SbtContext(settingInfos)
-    migrateBuild(rootFolder, sbtContext).code
+    migrateBuild(toRewrite, sbtContext).code
   }
 }

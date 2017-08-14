@@ -1,28 +1,28 @@
-// Use a scala version supported by scalafix.
-scalaVersion in ThisBuild := org.scalameta.BuildInfo.supportedScalaVersions.last
-lazy val root = project.in(file(".")).aggregate(rewrites, input, output, tests)
-
-lazy val sharedSettings = Def.settings(
-  organization := "ch.epfl.scala",
-  resolvers += Resolver.bintrayRepo("scalameta", "maven")
+val Scalafix = _root_.scalafix.Versions
+val sbthostVersion = "0.3.0"
+inThisBuild(
+  List(
+    scalaVersion := Scalafix.scala212,
+    organization := "ch.epfl.scala"
+  )
 )
 
+lazy val root = project.in(file(".")).aggregate(rewrites, input, output, tests)
+
 lazy val rewrites = project.settings(
-  sharedSettings,
   libraryDependencies ++= Seq(
-    "org.scalameta" %% "sbthost-runtime" % "0.1.0-RC3",
-    "ch.epfl.scala" %% "scalafix-core" % "0.4.2"
+    "org.scalameta" %% "sbthost-runtime" % sbthostVersion,
+    "ch.epfl.scala" %% "scalafix-core" % Scalafix.version
   )
 )
 
 lazy val input = project.settings(
-  sharedSettings,
   scalacOptions += "-Xplugin-require:sbthost",
   scalaVersion := "2.10.6",
   sbtPlugin := true,
   scalacOptions += s"-P:sbthost:sourceroot:${sourceDirectory.in(Compile).value}",
   addCompilerPlugin(
-    "org.scalameta" % "sbthost-nsc" % "0.1.0" cross CrossVersion.full)
+    "org.scalameta" % "sbthost-nsc" % sbthostVersion cross CrossVersion.full)
 )
 
 lazy val output = project.settings(
@@ -32,10 +32,9 @@ lazy val output = project.settings(
 
 lazy val tests = project
   .settings(
-    sharedSettings,
     libraryDependencies ++= Seq(
-      "org.scalameta" %% "scalameta" % org.scalameta.BuildInfo.version,
-      "ch.epfl.scala" % "scalafix-testkit" % "0.4.2" % Test cross CrossVersion.full
+      "org.scalameta" %% "scalameta" % Scalafix.scalameta,
+      "ch.epfl.scala" % "scalafix-testkit" % Scalafix.version % Test cross CrossVersion.full
     ),
     test.in(Test) := test.in(Test).dependsOn(compile.in(input, Compile)).value,
     buildInfoPackage := "sbtfix",

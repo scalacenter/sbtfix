@@ -2,27 +2,26 @@ package fix
 
 import scala.collection.immutable.Seq
 import scala.meta._
+import scala.meta.internal.io.PathIO
 import scala.meta.sbthost.Sbthost
 import scala.meta.tokens.Token.LeftParen
 import scala.meta.tokens.Token.RightParen
 import scalafix._
+import scalafix.internal.util.SemanticCtxImpl
 
-case class Sbtfix_v1(brokenMirror: Mirror)
-    extends SemanticRewrite(Sbthost.patchMirror(brokenMirror)) {
-  val mirror = ImplicitMirror
+case class Sbtfix_v1(sctx: SemanticCtx)
+    extends SemanticRewrite(
+      new SemanticCtxImpl(
+        Sbthost.patchDatabase(sctx.database, PathIO.workingDirectory))) {
   def rewrite(ctx: RewriteCtx): Patch = {
-    ctx.reporter.info(mirror.database.toString())
-    ctx.reporter.info(ctx.tree.syntax)
-    ctx.reporter.info(ctx.tree.structure)
-    SbtOneZeroMigrator(mirror, ctx).rewrite.asPatch
+    SbtOneZeroMigrator(ImplicitSemanticCtx, ctx).rewrite.asPatch
   }
 }
 
 /**
   * Migrates code from sbt 0.13.x to sbt 1.0.x.
   */
-case class SbtOneZeroMigrator(mirror: Mirror, ctx: RewriteCtx) {
-  implicit val mirror0 = mirror
+case class SbtOneZeroMigrator(sctx: SemanticCtx, ctx: RewriteCtx) {
   sealed abstract class SbtOperator {
     val operator: String
     val newOperator: String
@@ -36,7 +35,7 @@ case class SbtOneZeroMigrator(mirror: Mirror, ctx: RewriteCtx) {
       val inputKey: String = "sbt.InputKey["
     }
 
-    def unapply(tree: Term): Option[(Term, Token, Term.Arg)] = tree match {
+    def unapply(tree: Term): Option[(Term, Token, Term)] = tree match {
       case Term.ApplyInfix(lhs, o @ Term.Name(`operator`), _, Seq(rhs)) =>
         Some((lhs, o.tokens.head, rhs))
       case Term.Apply(Term.Select(lhs, o @ Term.Name(`operator`)), Seq(rhs)) =>
@@ -58,7 +57,10 @@ case class SbtOneZeroMigrator(mirror: Mirror, ctx: RewriteCtx) {
     }
 
     private def infoStartsWith(r: Term.Ref, prefix: String): Boolean =
-      r.symbol.denot.info.startsWith(prefix)
+      sctx
+        .symbol(r.pos)
+        .flatMap(sctx.denotation)
+        .exists(denot => denot.info.startsWith(prefix))
 
     private def existKeys(lhs: Term, typePrefix: String): Boolean = {
       val singleNames = lhs match {
@@ -77,9 +79,7 @@ case class SbtOneZeroMigrator(mirror: Mirror, ctx: RewriteCtx) {
       (singleNames ++ scopedNames).nonEmpty
     }
 
-    def rewriteDslOperator(lhs: Term,
-                           opToken: Token,
-                           rhs: Term.Arg): List[Patch] = {
+    def rewriteDslOperator(lhs: Term, opToken: Token, rhs: Term): List[Patch] = {
       val wrapExpression = rhs match {
         case arg @ Term.Apply(_, Seq(_: Term.Block))
             if !isParensWrapped(arg.tokens) =>
@@ -120,11 +120,11 @@ case class SbtOneZeroMigrator(mirror: Mirror, ctx: RewriteCtx) {
 
   def rewrite: Seq[Patch] = {
     ctx.tree.collect {
-      case `<<=`(lhs: Term, opToken: Token, rhs: Term.Arg) =>
+      case `<<=`(lhs: Term, opToken: Token, rhs: Term) =>
         `<<=`.rewriteDslOperator(lhs, opToken, rhs)
-      case `<+=`(lhs: Term, opToken: Token, rhs: Term.Arg) =>
+      case `<+=`(lhs: Term, opToken: Token, rhs: Term) =>
         `<+=`.rewriteDslOperator(lhs, opToken, rhs)
-      case `<++=`(lhs: Term, opToken: Token, rhs: Term.Arg) =>
+      case `<++=`(lhs: Term, opToken: Token, rhs: Term) =>
         `<++=`.rewriteDslOperator(lhs, opToken, rhs)
     }.flatten
   }
